@@ -4,9 +4,9 @@ from direct.interval.IntervalGlobal import *
 from direct.task import Task
 from direct.actor.Actor import Actor
 from core import CollisionPolygon, Vec3
-from interval.LerpInterval import LerpHprInterval
 from random import shuffle
 from direct.gui.OnscreenText import OnscreenText
+import math
 
 
 
@@ -44,15 +44,7 @@ class Player:
     def setKeys(self, key, value):
         self.keys[key] = value
     def Move(self, task):
-        if self.keys["w"] and self.wOn:
-            self.player.setY(self.player.getY() + self.vel)
-        if self.keys["s"] and self.sOn:
-            self.player.setY(self.player.getY()  -self.vel)
-        if self.keys["a"] and self.aOn:
-            self.player.setX(self.player.getX()  -self.vel)
-        if self.keys["d"] and self.dOn:
-            self.player.setX(self.player.getX() + self.vel)
-       
+
         if not(self.keys["w"] or self.keys["s"] or self.keys["a"] or self.keys["d"]) or (self.keys["w"] and self.keys["s"]) or (self.keys["a"] and self.keys["d"] and not(self.keys["w"] or self.keys["s"])):
             if not(self.idle.isPlaying()):
                 self.idle.play()
@@ -61,26 +53,38 @@ class Player:
             if not(self.walk.isPlaying()):
                 self.walk.play()
                 self.idle.stop()
-        if self.keys["w"] and not(self.keys["s"] or self.keys["d"] or self.keys["a"]):
+        if (self.keys["w"] and not(self.keys["s"] or self.keys["d"] or self.keys["a"])) or (self.keys["w"] and self.keys["d"] and self.keys["a"]):
             self.player.setH(180)
-        if self.keys["s"] and not(self.keys["w"] or self.keys["d"] or self.keys["a"]):
+            if self.wOn:
+                self.player.setPos(self.player.getPos() + Vec3(0,self.vel,0))
+        if (self.keys["s"] and not(self.keys["w"] or self.keys["d"] or self.keys["a"])) or (self.keys["s"] and self.keys["d"] and self.keys["a"]):
             self.player.setH(0)
+            if self.sOn:
+                self.player.setPos(self.player.getPos() + Vec3(0,-self.vel,0))
         if self.keys["d"] and not(self.keys["s"] or self.keys["w"] or self.keys["a"]):
             self.player.setH(90)
+            if self.dOn:
+                self.player.setPos(self.player.getPos() + Vec3(self.vel,0,0))
         if self.keys["a"]  and not(self.keys["s"] or self.keys["d"] or self.keys["w"]):
             self.player.setH(270)
-        if self.keys["w"] and self.keys["a"]:
+            if self.aOn:
+                self.player.setPos(self.player.getPos() + Vec3(-self.vel,0,0))
+        if self.keys["w"] and self.keys["a"] and not(self.keys["d"]):
             self.player.setH(225)
-        if self.keys["w"] and self.keys["d"]:
+            if self.wOn and self.aOn:
+                self.player.setPos(self.player.getPos() + Vec3(-self.vel/math.sqrt(2),self.vel/math.sqrt(2),0))
+        if self.keys["w"] and self.keys["d"] and not(self.keys["a"]):
             self.player.setH(135)
-        if self.keys["s"] and self.keys["a"]:
+            if self.wOn and self.dOn:
+                self.player.setPos(self.player.getPos() + Vec3(self.vel/math.sqrt(2),self.vel/math.sqrt(2),0))
+        if self.keys["s"] and self.keys["a"] and not(self.keys["d"]):
             self.player.setH(315)
-        if self.keys["s"] and self.keys["d"]:
+            if self.sOn and self.aOn:
+                self.player.setPos(self.player.getPos() + Vec3(-self.vel/math.sqrt(2),-self.vel/math.sqrt(2),0))
+        if self.keys["s"] and self.keys["d"] and not(self.keys["a"]):
             self.player.setH(45)
-        if self.keys["s"] and self.keys["d"] and self.keys["a"]:
-            self.player.setH(0)
-        if self.keys["w"] and self.keys["d"] and self.keys["a"]:
-            self.player.setH(180)
+            if self.sOn and self.dOn:
+                self.player.setPos(self.player.getPos() + Vec3(self.vel/math.sqrt(2),-self.vel/math.sqrt(2),0))
         
             
         return Task.cont
@@ -196,6 +200,7 @@ class Game(ShowBase, Player, Walls):
         self.output = "Score: " + str(self.score)
         self.difficulty = .3
         self.font = loader.loadFont('Fonts/SigmarOne-Regular.ttf')
+        self.collision = False
         
         self.env = loader.loadModel("Models/env.egg.pz")
         self.env.reparentTo(self.render)
@@ -258,7 +263,8 @@ class Game(ShowBase, Player, Walls):
                 self.score += 1
                 self.output = "Score: " + str(self.score)
                 self.text.setText(self.output)
-            self.accept(f"into-{car.name}", self.collide_car)
+            if not(self.collision):
+                self.accept(f"into-{car.name}", self.collide_car)
         
         return Task.cont
     def collide_car(self, coll):
@@ -266,6 +272,7 @@ class Game(ShowBase, Player, Walls):
             if car.carNode != coll.getIntoNodePath():
                 car.car.removeNode()
             taskMgr.remove('move_car' + car.car_num)
+        self.collision = True
         self.pause()
             
     def pause(self, coll=True):
@@ -283,7 +290,6 @@ class Game(ShowBase, Player, Walls):
         self.accept("r", self.un_pause)
         self.accept("f", self.exit)
     def un_pause(self):
-        print(len(self.all_car))
         for car in self.all_car:
             car.car.removeNode()
         for car in  self.all_car:
@@ -300,6 +306,7 @@ class Game(ShowBase, Player, Walls):
         self.output = "Score: " + str(self.score)
         self.text.setText(self.output)
         self.text.setPos(1.1,.9)
+        self.collision = False
         
     def exit(self):
         finalizeExit()
