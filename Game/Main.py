@@ -19,12 +19,15 @@ class Player:
         self.vel = .2
         self.wOn= self.aOn=self.sOn= self.dOn = True
         
+        self.dum= self.render.attachNewNode("dum")
         self.player = Actor("Models/Character/Ralph.egg", {"walk":"Models/Character/Ralph-Run.egg", "idle":"Models/Character/Ralph-Idle.egg"})
         self.player.reparentTo(self.render)
         self.player.setScale(1.2)
         self.player.setPos(0,0, 0)
         self.walk = self.player.getAnimControl('walk')
         self.idle = self.player.getAnimControl('idle')
+        self.temp = self.player.getMat().getRow3(1)
+        self.Vecvel = Vec3(0,-self.vel,0)
         
         
         self.cnode = CollisionNode("player")
@@ -56,36 +59,36 @@ class Player:
         if (self.keys["w"] and not(self.keys["s"] or self.keys["d"] or self.keys["a"])) or (self.keys["w"] and self.keys["d"] and self.keys["a"]):
             self.player.setH(180)
             if self.wOn:
-                self.player.setPos(self.player.getPos() + Vec3(0,self.vel,0))
+                self.player.setPos(self.player, self.Vecvel)
         if (self.keys["s"] and not(self.keys["w"] or self.keys["d"] or self.keys["a"])) or (self.keys["s"] and self.keys["d"] and self.keys["a"]):
             self.player.setH(0)
             if self.sOn:
-                self.player.setPos(self.player.getPos() + Vec3(0,-self.vel,0))
+                self.player.setPos(self.player, self.Vecvel)
         if self.keys["d"] and not(self.keys["s"] or self.keys["w"] or self.keys["a"]):
             self.player.setH(90)
             if self.dOn:
-                self.player.setPos(self.player.getPos() + Vec3(self.vel,0,0))
+                self.player.setPos(self.player, self.Vecvel)
         if self.keys["a"]  and not(self.keys["s"] or self.keys["d"] or self.keys["w"]):
             self.player.setH(270)
             if self.aOn:
-                self.player.setPos(self.player.getPos() + Vec3(-self.vel,0,0))
+                self.player.setPos(self.player, self.Vecvel)
         if self.keys["w"] and self.keys["a"] and not(self.keys["d"]):
             self.player.setH(225)
             if self.wOn and self.aOn:
-                self.player.setPos(self.player.getPos() + Vec3(-self.vel/math.sqrt(2),self.vel/math.sqrt(2),0))
+                self.player.setPos(self.player, self.Vecvel)
         if self.keys["w"] and self.keys["d"] and not(self.keys["a"]):
             self.player.setH(135)
             if self.wOn and self.dOn:
-                self.player.setPos(self.player.getPos() + Vec3(self.vel/math.sqrt(2),self.vel/math.sqrt(2),0))
+                self.player.setPos(self.player, self.Vecvel)
         if self.keys["s"] and self.keys["a"] and not(self.keys["d"]):
             self.player.setH(315)
             if self.sOn and self.aOn:
-                self.player.setPos(self.player.getPos() + Vec3(-self.vel/math.sqrt(2),-self.vel/math.sqrt(2),0))
+                self.player.setPos(self.player, self.Vecvel)
         if self.keys["s"] and self.keys["d"] and not(self.keys["a"]):
             self.player.setH(45)
             if self.sOn and self.dOn:
-                self.player.setPos(self.player.getPos() + Vec3(self.vel/math.sqrt(2),-self.vel/math.sqrt(2),0))
-        
+                self.player.setPos(self.player, self.Vecvel)
+
             
         return Task.cont
 class Walls:
